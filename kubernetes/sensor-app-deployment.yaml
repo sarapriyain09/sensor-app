@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sensor-app
+  labels:
+    app: sensor-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: sensor-app
+  template:
+    metadata:
+      labels:
+        app: sensor-app
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: sensor-app
+          image: sensor-app:dev
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: MQTT_ENABLED
+              value: "1"
+            - name: MQTT_HOST
+              value: mosquitto
+            - name: MQTT_PORT
+              value: "1883"
+            - name: MQTT_TOPIC_PREFIX
+              value: factory

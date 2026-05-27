@@ -1,0 +1,131 @@
+{
+  "widgets": [
+    {
+      "type": "text",
+      "x": 0, "y": 0, "width": 24, "height": 2,
+      "properties": {
+        "markdown": "# Sensor App — Machine Telemetry Dashboard\nNamespace: `SensorApp/Telemetry` | Machine: `machine1` | Region: `us-east-1`"
+      }
+    },
+    {
+      "type": "metric",
+      "x": 0, "y": 2, "width": 12, "height": 6,
+      "properties": {
+        "title": "Temperature (°C)",
+        "metrics": [
+          ["SensorApp/Telemetry", "temperature_c", "MachineId", "machine1", {"stat": "Average", "period": 60, "color": "#e07b39", "label": "Avg Temperature"}],
+          ["...", {"stat": "Maximum", "period": 60, "color": "#d62728", "label": "Max Temperature"}],
+          ["...", {"stat": "Minimum", "period": 60, "color": "#1f77b4", "label": "Min Temperature"}]
+        ],
+        "view": "timeSeries",
+        "stacked": false,
+        "region": "us-east-1",
+        "period": 60,
+        "stat": "Average",
+        "yAxis": {
+          "left": { "label": "°C", "showUnits": false }
+        },
+        "annotations": {
+          "horizontal": [
+            { "value": 80, "label": "Warning threshold", "color": "#ff7f0e" },
+            { "value": 90, "label": "Critical threshold", "color": "#d62728" }
+          ]
+        }
+      }
+    },
+    {
+      "type": "metric",
+      "x": 12, "y": 2, "width": 12, "height": 6,
+      "properties": {
+        "title": "Pressure (bar)",
+        "metrics": [
+          ["SensorApp/Telemetry", "pressure_bar", "MachineId", "machine1", {"stat": "Average", "period": 60, "color": "#2ca02c", "label": "Avg Pressure"}],
+          ["...", {"stat": "Maximum", "period": 60, "color": "#17becf", "label": "Max Pressure"}]
+        ],
+        "view": "timeSeries",
+        "stacked": false,
+        "region": "us-east-1",
+        "period": 60,
+        "stat": "Average",
+        "yAxis": {
+          "left": { "label": "bar", "showUnits": false }
+        }
+      }
+    },
+    {
+      "type": "metric",
+      "x": 0, "y": 8, "width": 12, "height": 6,
+      "properties": {
+        "title": "Vibration (mm/s)",
+        "metrics": [
+          ["SensorApp/Telemetry", "vibration_mm_s", "MachineId", "machine1", {"stat": "Average", "period": 60, "color": "#9467bd", "label": "Avg Vibration"}],
+          ["...", {"stat": "Maximum", "period": 60, "color": "#e377c2", "label": "Max Vibration"}]
+        ],
+        "view": "timeSeries",
+        "stacked": false,
+        "region": "us-east-1",
+        "period": 60,
+        "stat": "Average",
+        "yAxis": {
+          "left": { "label": "mm/s", "showUnits": false }
+        }
+      }
+    },
+    {
+      "type": "metric",
+      "x": 12, "y": 8, "width": 12, "height": 6,
+      "properties": {
+        "title": "RPM",
+        "metrics": [
+          ["SensorApp/Telemetry", "rpm", "MachineId", "machine1", {"stat": "Average", "period": 60, "color": "#8c564b", "label": "Avg RPM"}],
+          ["...", {"stat": "Maximum", "period": 60, "color": "#bcbd22", "label": "Max RPM"}]
+        ],
+        "view": "timeSeries",
+        "stacked": false,
+        "region": "us-east-1",
+        "period": 60,
+        "stat": "Average",
+        "yAxis": {
+          "left": { "label": "RPM", "showUnits": false }
+        }
+      }
+    },
+    {
+      "type": "metric",
+      "x": 0, "y": 14, "width": 12, "height": 6,
+      "properties": {
+        "title": "Fault Count",
+        "metrics": [
+          ["SensorApp/Telemetry", "fault", "MachineId", "machine1", {"stat": "Sum", "period": 60, "color": "#d62728", "label": "Faults"}]
+        ],
+        "view": "timeSeries",
+        "stacked": false,
+        "region": "us-east-1",
+        "period": 60,
+        "stat": "Sum",
+        "yAxis": {
+          "left": { "label": "Count", "showUnits": false, "min": 0 }
+        }
+      }
+    },
+    {
+      "type": "metric",
+      "x": 12, "y": 14, "width": 12, "height": 6,
+      "properties": {
+        "title": "Live Gauges — Current Values",
+        "metrics": [
+          ["SensorApp/Telemetry", "temperature_c", "MachineId", "machine1", {"stat": "Average", "period": 60, "label": "Temperature °C"}],
+          ["SensorApp/Telemetry", "pressure_bar", "MachineId", "machine1", {"stat": "Average", "period": 60, "label": "Pressure bar"}],
+          ["SensorApp/Telemetry", "vibration_mm_s", "MachineId", "machine1", {"stat": "Average", "period": 60, "label": "Vibration mm/s"}],
+          ["SensorApp/Telemetry", "rpm", "MachineId", "machine1", {"stat": "Average", "period": 60, "label": "RPM"}]
+        ],
+        "view": "singleValue",
+        "region": "us-east-1",
+        "period": 300,
+        "stat": "Average",
+        "sparkline": true,
+        "setPeriodToTimeRange": false
+      }
+    }
+  ]
+}

@@ -1,0 +1,170 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "sensor-app Phase 9: CloudWatch alarms for telemetry metrics (DynamoDB Streams -> Metrics Lambda -> CloudWatch)"
+
+Parameters:
+  MetricsNamespace:
+    Type: String
+    Default: "SensorApp/Telemetry"
+    Description: "CloudWatch metrics namespace (must match metrics Lambda)"
+
+  MachineId:
+    Type: String
+    Default: "machine1"
+    Description: "MachineId dimension value to alarm on"
+
+  ExistingAlarmTopicArn:
+    Type: String
+    Default: ""
+    Description: "Optional existing SNS Topic ARN to use for alarm actions. Leave empty to create a new topic in this stack."
+
+  AlarmEmail:
+    Type: String
+    Default: ""
+    Description: "Optional email address to subscribe to SNS alarms (requires confirmation). Leave empty to skip subscription."
+
+  AlarmSmsNumber:
+    Type: String
+    Default: ""
+    Description: "Optional SMS number (E.164, e.g. +14155552671) to subscribe to SNS alarms. Leave empty to skip subscription."
+
+  TemperatureHighThreshold:
+    Type: Number
+    Default: 88
+    Description: "Alarm when avg temperature_c exceeds this value"
+
+  VibrationHighThreshold:
+    Type: Number
+    Default: 11
+    Description: "Alarm when avg vibration_mm_s exceeds this value"
+
+  PressureLowThreshold:
+    Type: Number
+    Default: 1.5
+    Description: "Alarm when avg pressure_bar drops below this value"
+
+Conditions:
+  HasExistingAlarmTopicArn: !Not [!Equals [!Ref ExistingAlarmTopicArn, ""]]
+  CreateAlarmTopic: !Equals [!Ref ExistingAlarmTopicArn, ""]
+  HasAlarmEmail: !Not [!Equals [!Ref AlarmEmail, ""]]
+  HasAlarmSmsNumber: !Not [!Equals [!Ref AlarmSmsNumber, ""]]
+  CreateAlarmEmailSubscription: !And
+    - !Equals [!Ref ExistingAlarmTopicArn, ""]
+    - !Not [!Equals [!Ref AlarmEmail, ""]]
+  CreateAlarmSmsSubscription: !And
+    - !Equals [!Ref ExistingAlarmTopicArn, ""]
+    - !Not [!Equals [!Ref AlarmSmsNumber, ""]]
+
+Resources:
+  AlarmTopic:
+    Type: AWS::SNS::Topic
+    Condition: CreateAlarmTopic
+    Properties:
+      TopicName: "sensor-app-cloudwatch-alarms"
+
+  AlarmEmailSubscription:
+    Type: AWS::SNS::Subscription
+    Condition: CreateAlarmEmailSubscription
+    Properties:
+      TopicArn: !Ref AlarmTopic
+      Protocol: email
+      Endpoint: !Ref AlarmEmail
+
+  AlarmSmsSubscription:
+    Type: AWS::SNS::Subscription
+    Condition: CreateAlarmSmsSubscription
+    Properties:
+      TopicArn: !Ref AlarmTopic
+      Protocol: sms
+      Endpoint: !Ref AlarmSmsNumber
+
+  HighTemperatureAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "sensor-app-${MachineId}-high-temperature"
+      AlarmDescription: !Sub "Average temperature_c is above ${TemperatureHighThreshold} for ${MachineId}"
+      Namespace: !Ref MetricsNamespace
+      MetricName: "temperature_c"
+      Dimensions:
+        - Name: "MachineId"
+          Value: !Ref MachineId
+      Statistic: Average
+      Period: 60
+      EvaluationPeriods: 5
+      DatapointsToAlarm: 3
+      Threshold: !Ref TemperatureHighThreshold
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - !If [HasExistingAlarmTopicArn, !Ref ExistingAlarmTopicArn, !Ref AlarmTopic]
+      OKActions:
+        - !If [HasExistingAlarmTopicArn, !Ref ExistingAlarmTopicArn, !Ref AlarmTopic]
+
+  HighVibrationAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "sensor-app-${MachineId}-high-vibration"
+      AlarmDescription: !Sub "Average vibration_mm_s is above ${VibrationHighThreshold} for ${MachineId}"
+      Namespace: !Ref MetricsNamespace
+      MetricName: "vibration_mm_s"
+      Dimensions:
+        - Name: "MachineId"
+          Value: !Ref MachineId
+      Statistic: Average
+      Period: 60
+      EvaluationPeriods: 5
+      DatapointsToAlarm: 3
+      Threshold: !Ref VibrationHighThreshold
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - !If [HasExistingAlarmTopicArn, !Ref ExistingAlarmTopicArn, !Ref AlarmTopic]
+      OKActions:
+        - !If [HasExistingAlarmTopicArn, !Ref ExistingAlarmTopicArn, !Ref AlarmTopic]
+
+  LowPressureAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "sensor-app-${MachineId}-low-pressure"
+      AlarmDescription: !Sub "Average pressure_bar is below ${PressureLowThreshold} for ${MachineId}"
+      Namespace: !Ref MetricsNamespace
+      MetricName: "pressure_bar"
+      Dimensions:
+        - Name: "MachineId"
+          Value: !Ref MachineId
+      Statistic: Average
+      Period: 60
+      EvaluationPeriods: 5
+      DatapointsToAlarm: 3
+      Threshold: !Ref PressureLowThreshold
+      ComparisonOperator: LessThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - !If [HasExistingAlarmTopicArn, !Ref ExistingAlarmTopicArn, !Ref AlarmTopic]
+      OKActions:
+        - !If [HasExistingAlarmTopicArn, !Ref ExistingAlarmTopicArn, !Ref AlarmTopic]
+
+  FaultCountAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "sensor-app-${MachineId}-fault"
+      AlarmDescription: !Sub "Fault metric > 0 for ${MachineId} (state==FAULT)"
+      Namespace: !Ref MetricsNamespace
+      MetricName: "fault"
+      Dimensions:
+        - Name: "MachineId"
+          Value: !Ref MachineId
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - !If [HasExistingAlarmTopicArn, !Ref ExistingAlarmTopicArn, !Ref AlarmTopic]
+
+Outputs:
+  AlarmTopicArn:
+    Value: !If [HasExistingAlarmTopicArn, !Ref ExistingAlarmTopicArn, !Ref AlarmTopic]
+  MetricsNamespace:
+    Value: !Ref MetricsNamespace

@@ -1,0 +1,32 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ingestion-api-schema
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: psql
+          image: postgres:16
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: ingestion-api-db
+                  key: database_url
+          command: ["bash", "-lc"]
+          args:
+            - |
+              set -euo pipefail
+              echo "Applying schema..."
+              psql "$DATABASE_URL" -f /sql/schema.sql
+              echo "Done."
+          volumeMounts:
+            - name: schema
+              mountPath: /sql
+              readOnly: true
+      volumes:
+        - name: schema
+          configMap:
+            name: ingestion-api-schema

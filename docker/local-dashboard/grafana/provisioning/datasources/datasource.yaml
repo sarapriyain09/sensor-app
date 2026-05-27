@@ -1,0 +1,14 @@
+apiVersion: 1
+
+datasources:
+  - name: InfluxDB (local)
+    uid: influxdb-local
+    type: influxdb
+    access: proxy
+    url: http://influxdb:8086
+    isDefault: true
+    jsonData:
+      version: InfluxQL
+      dbName: sensorapp
+      httpMode: GET
+    editable: true

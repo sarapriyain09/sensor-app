@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# VCS
+.git/
+.gitignore
+
+# Local secrets / keys (defense-in-depth)
+connect_device_package/
+*.pem
+*.key
+*.cert.pem
+*.private.key
+
+# Local state
+*.db
+
+# Editor
+.vscode/
+
+# Docs and misc (keeps images smaller)
+docs/
+kubernetes/

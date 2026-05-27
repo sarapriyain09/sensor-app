@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aws-iot-bridge
+  labels:
+    app: aws-iot-bridge
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aws-iot-bridge
+  template:
+    metadata:
+      labels:
+        app: aws-iot-bridge
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: aws-iot-bridge
+          image: sensor-app:dev
+          imagePullPolicy: IfNotPresent
+          command: ["python", "-u", "-m", "aws_iot.bridge"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          env:
+            - name: AWS_IOT_ENABLED
+              value: "1"
+            - name: AWS_IOT_ENDPOINT
+              value: "axmuxp0nzbtg9-ats.iot.us-east-1.amazonaws.com"
+            - name: AWS_IOT_CLIENT_ID
+              value: "machine"
+            - name: AWS_IOT_TOPIC_PREFIX
+              value: "factory"
+            - name: AWS_IOT_QOS
+              value: "1"
+            - name: LOCAL_MQTT_HOST
+              value: "mosquitto"
+            - name: LOCAL_MQTT_PORT
+              value: "1883"
+            - name: LOCAL_MQTT_TOPIC_FILTER
+              value: "factory/+/telemetry"
+            - name: AWS_IOT_QUEUE_DB_PATH
+              value: "/var/lib/aws-iot-bridge/queue.db"
+            - name: AWS_IOT_QUEUE_MAX_MESSAGES
+              value: "100000"
+            - name: AWS_IOT_FLUSH_INTERVAL_SECONDS
+              value: "1.0"
+            - name: AWS_IOT_FLUSH_BATCH_SIZE
+              value: "200"
+            - name: AWS_IOT_CA_PATH
+              value: "/run/secrets/aws/ca.pem"
+            - name: AWS_IOT_CERT_PATH
+              value: "/run/secrets/aws/cert.pem"
+            - name: AWS_IOT_KEY_PATH
+              value: "/run/secrets/aws/private.key"
+          volumeMounts:
+            - name: aws-iot-creds
+              mountPath: /run/secrets/aws
+              readOnly: true
+            - name: aws-iot-queue
+              mountPath: /var/lib/aws-iot-bridge
+      volumes:
+        - name: aws-iot-creds
+          secret:
+            secretName: aws-iot-creds
+        - name: aws-iot-queue
+          emptyDir: {}

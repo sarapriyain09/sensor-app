@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ingestion-api-lb
+  labels:
+    app: ingestion-api
+spec:
+  type: LoadBalancer
+  selector:
+    app: ingestion-api
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8000

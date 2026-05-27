@@ -1,0 +1,67 @@
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: mosquitto
+    ports:
+      - "127.0.0.1:1883:1883"
+    volumes:
+      - ./docker/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+    restart: unless-stopped
+
+  influxdb:
+    image: influxdb:1.8
+    container_name: influxdb
+    ports:
+      - "127.0.0.1:8086:8086"
+    environment:
+      INFLUXDB_DB: sensorapp
+      INFLUXDB_HTTP_AUTH_ENABLED: "false"
+    volumes:
+      - influxdb-data:/var/lib/influxdb
+    restart: unless-stopped
+
+  telegraf:
+    image: telegraf:1.30
+    container_name: telegraf
+    depends_on:
+      - mosquitto
+      - influxdb
+    volumes:
+      - ./docker/local-dashboard/telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    depends_on:
+      - influxdb
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./docker/local-dashboard/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./docker/local-dashboard/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    restart: unless-stopped
+
+  sensor-app:
+    build: .
+    container_name: sensor-app
+    depends_on:
+      - mosquitto
+    environment:
+      MQTT_ENABLED: "1"
+      MQTT_HOST: mosquitto
+      MQTT_PORT: "1883"
+      MQTT_TOPIC_PREFIX: "factory"
+      # Optional hardening (only used if set)
+      MQTT_USERNAME: ${MQTT_USERNAME:-}
+      MQTT_PASSWORD: ${MQTT_PASSWORD:-}
+    restart: unless-stopped
+
+volumes:
+  influxdb-data:
+  grafana-data:

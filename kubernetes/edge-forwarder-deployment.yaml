@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: edge-forwarder
+  labels:
+    app: edge-forwarder
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: edge-forwarder
+  template:
+    metadata:
+      labels:
+        app: edge-forwarder
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: edge-forwarder
+          image: edge-forwarder:dev
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          env:
+            - name: LOCAL_MQTT_HOST
+              value: mosquitto
+            - name: LOCAL_MQTT_PORT
+              value: "1883"
+            - name: LOCAL_MQTT_TOPIC_FILTER
+              value: "factory/+/telemetry"
+            - name: CLOUD_API_URL
+              value: "http://adce4e502379e42db833be32d6166ad7-927539562.us-east-1.elb.amazonaws.com/ingest/batch"
+            - name: JWT_PRIVATE_KEY_PATH
+              value: "/run/secrets/jwt/private.pem"
+            - name: JWT_ISSUER
+              value: "sensor-app-edge"
+            - name: JWT_AUDIENCE
+              value: "sensor-app-ingestion"
+            - name: JWT_SUBJECT
+              value: "edge-forwarder"
+            - name: QUEUE_DB_PATH
+              value: "/var/lib/edge-forwarder/queue.db"
+          volumeMounts:
+            - name: jwt
+              mountPath: /run/secrets/jwt
+              readOnly: true
+            - name: queue
+              mountPath: /var/lib/edge-forwarder
+      volumes:
+        - name: jwt
+          secret:
+            secretName: edge-forwarder-jwt
+        - name: queue
+          persistentVolumeClaim:
+            claimName: edge-forwarder-queue
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: edge-forwarder-queue
+  labels:
+    app: edge-forwarder
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi

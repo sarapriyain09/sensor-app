@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mosquitto-config
+  labels:
+    app: mosquitto
+data:
+  mosquitto.conf: |
+    persistence false
+
+    log_dest stdout
+
+    # Must be set before any security settings (e.g. allow_anonymous).
+    per_listener_settings true
+    listener 1883 0.0.0.0
+
+    allow_anonymous true
+
+    # Scale-friendly defaults for demos (multiple sensor-app replicas)
+    max_connections 1000
+    max_inflight_messages 50
+    max_queued_messages 10000

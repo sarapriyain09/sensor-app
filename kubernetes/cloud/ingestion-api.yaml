@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ingestion-api
+  labels:
+    app: ingestion-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ingestion-api
+  template:
+    metadata:
+      labels:
+        app: ingestion-api
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: ingestion-api
+          image: 730335278854.dkr.ecr.us-east-1.amazonaws.com/sensor-app-ingestion-api:phase10-fix1
+          ports:
+            - containerPort: 8000
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: ingestion-api-db
+                  key: database_url
+            - name: JWT_PUBLIC_KEY_PATH
+              value: "/run/secrets/jwt/public.pem"
+            - name: JWT_ISSUER
+              value: "sensor-app-edge"
+            - name: JWT_AUDIENCE
+              value: "sensor-app-ingestion"
+          volumeMounts:
+            - name: jwt
+              mountPath: /run/secrets/jwt
+              readOnly: true
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+      volumes:
+        - name: jwt
+          secret:
+            secretName: ingestion-api-jwt
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ingestion-api
+  labels:
+    app: ingestion-api
+spec:
+  selector:
+    app: ingestion-api
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8000

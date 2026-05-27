@@ -1,0 +1,218 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "sensor-app Phase 8: IoT Core -> Lambda ingestion -> Timestream + optional SNS alerts"
+
+Parameters:
+  TopicFilter:
+    Type: String
+    Default: "factory/+/telemetry"
+    Description: "IoT topic filter to ingest (bridge publishes telemetry here)"
+  TimestreamDatabaseName:
+    Type: String
+    Default: "sensor_app"
+  TimestreamTableName:
+    Type: String
+    Default: "telemetry"
+  IotRuleName:
+    Type: String
+    Default: "sensor_app_telemetry_to_timestream"
+  EnableSnsAlerts:
+    Type: String
+    AllowedValues: ["true", "false"]
+    Default: "true"
+
+Conditions:
+  UseSnsAlerts: !Equals [!Ref EnableSnsAlerts, "true"]
+
+Resources:
+  TelemetryDatabase:
+    Type: AWS::Timestream::Database
+    Properties:
+      DatabaseName: !Ref TimestreamDatabaseName
+
+  TelemetryTable:
+    Type: AWS::Timestream::Table
+    Properties:
+      DatabaseName: !Ref TimestreamDatabaseName
+      TableName: !Ref TimestreamTableName
+      RetentionProperties:
+        MemoryStoreRetentionPeriodInHours: 24
+        MagneticStoreRetentionPeriodInDays: 30
+
+  AlertsTopic:
+    Type: AWS::SNS::Topic
+    Condition: UseSnsAlerts
+    Properties:
+      TopicName: "sensor-app-alerts"
+
+  IngestionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: "sensor-app-timestream-write"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - timestream:DescribeEndpoints
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - timestream:WriteRecords
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: "*"
+              - !If
+                - UseSnsAlerts
+                - Effect: Allow
+                  Action:
+                    - sns:Publish
+                  Resource: !Ref AlertsTopic
+                - !Ref AWS::NoValue
+
+  IngestionFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: "sensor-app-timestream-ingestion"
+      Runtime: python3.11
+      Handler: index.handler
+      Role: !GetAtt IngestionRole.Arn
+      Timeout: 30
+      MemorySize: 256
+      Environment:
+        Variables:
+          TS_DB: !Ref TimestreamDatabaseName
+          TS_TABLE: !Ref TimestreamTableName
+          ALERTS_TOPIC_ARN: !If [UseSnsAlerts, !Ref AlertsTopic, ""]
+      Code:
+        ZipFile: |
+          import json
+          import os
+          from datetime import datetime, timezone
+
+          import boto3
+
+
+          TS_DB = os.environ.get("TS_DB", "sensor_app")
+          TS_TABLE = os.environ.get("TS_TABLE", "telemetry")
+          ALERTS_TOPIC_ARN = os.environ.get("ALERTS_TOPIC_ARN", "")
+
+          ts = boto3.client("timestream-write")
+          sns = boto3.client("sns")
+
+
+          def _to_epoch_ms(iso_ts: str | None) -> int:
+              if not iso_ts:
+                  return int(datetime.now(tz=timezone.utc).timestamp() * 1000)
+              try:
+                  # Accept e.g. 2026-05-23T18:56:35.926779+00:00
+                  dt = datetime.fromisoformat(iso_ts.replace("Z", "+00:00"))
+                  if dt.tzinfo is None:
+                      dt = dt.replace(tzinfo=timezone.utc)
+                  return int(dt.timestamp() * 1000)
+              except Exception:
+                  return int(datetime.now(tz=timezone.utc).timestamp() * 1000)
+
+
+          def _dimension(name: str, value: str | None):
+              return {"Name": name, "Value": str(value or "unknown")}
+
+
+          def _write_records(dimensions, t_ms: int, payload: dict):
+              # One record per measure keeps it simple.
+              records = []
+              for key, value in payload.items():
+                  if key in {"timestamp", "factory_id", "machine_id", "alerts"}:
+                      continue
+
+                  if value is None:
+                      continue
+
+                  if isinstance(value, (int, float)):
+                      measure_type = "DOUBLE" if isinstance(value, float) else "BIGINT"
+                      measure_value = str(value)
+                  else:
+                      measure_type = "VARCHAR"
+                      measure_value = json.dumps(value) if isinstance(value, (list, dict)) else str(value)
+
+                  records.append(
+                      {
+                          "Dimensions": dimensions,
+                          "Time": str(t_ms),
+                          "TimeUnit": "MILLISECONDS",
+                          "MeasureName": key,
+                          "MeasureValue": measure_value,
+                          "MeasureValueType": measure_type,
+                      }
+                  )
+
+              if not records:
+                  return
+
+              # Chunk to avoid request limits.
+              for i in range(0, len(records), 100):
+                  ts.write_records(DatabaseName=TS_DB, TableName=TS_TABLE, Records=records[i : i + 100])
+
+
+          def handler(event, context):
+              # IoT Rule -> Lambda provides event as dict.
+              payload = event if isinstance(event, dict) else {}
+
+              factory_id = payload.get("factory_id")
+              machine_id = payload.get("machine_id")
+              ts_iso = payload.get("timestamp")
+              t_ms = _to_epoch_ms(ts_iso)
+
+              dimensions = [_dimension("factory_id", factory_id), _dimension("machine_id", machine_id)]
+              _write_records(dimensions, t_ms, payload)
+
+              # Optional alert: on FAULT state, publish full payload to SNS.
+              if ALERTS_TOPIC_ARN and str(payload.get("state", "")).upper() == "FAULT":
+                  sns.publish(TopicArn=ALERTS_TOPIC_ARN, Message=json.dumps(payload), Subject="sensor-app FAULT")
+
+              return {"ok": True}
+
+  IotInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref IngestionFunction
+      Principal: iot.amazonaws.com
+      SourceArn: !Sub "arn:aws:iot:${AWS::Region}:${AWS::AccountId}:rule/${IotRuleName}"
+
+  TelemetryIngestRule:
+    Type: AWS::IoT::TopicRule
+    Properties:
+      RuleName: !Ref IotRuleName
+      TopicRulePayload:
+        AwsIotSqlVersion: "2016-03-23"
+        Sql: !Sub "SELECT * FROM '${TopicFilter}'"
+        RuleDisabled: false
+        Actions:
+          - Lambda:
+              FunctionArn: !GetAtt IngestionFunction.Arn
+
+Outputs:
+  TimestreamDatabase:
+    Value: !Ref TimestreamDatabaseName
+  TimestreamTable:
+    Value: !Ref TimestreamTableName
+  IotRule:
+    Value: !Ref IotRuleName
+  IngestionFunctionName:
+    Value: !Ref IngestionFunction
+  AlertsTopicArn:
+    Condition: UseSnsAlerts
+    Value: !Ref AlertsTopic

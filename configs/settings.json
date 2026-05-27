@@ -1,0 +1,16 @@
+{
+  "factory_id": "factory",
+  "machine_id": "machine1",
+  "interval_seconds": 2.0,
+  "temperature_warning_c": 80.0,
+  "temperature_fault_c": 88.0,
+  "vibration_warning_mm_s": 8.0,
+  "vibration_fault_mm_s": 11.0,
+  "mqtt_enabled": false,
+  "mqtt_host": "localhost",
+  "mqtt_port": 1883,
+  "mqtt_topic_prefix": "factory",
+  "mqtt_qos": 0,
+  "mqtt_retain": false,
+  "mqtt_client_id": "sensor-simulator"
+}

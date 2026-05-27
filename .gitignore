@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Local secrets / AWS IoT connect-device package (contains private keys)
+connect_device_package/
+
+# Common key/cert filenames (defense-in-depth)
+*.private.key
+*.cert.pem
+*.key
+*.pem
+*.pub
+
+# Local SQLite queue (if mounted to hostPath later)
+*.db
+*.db-shm
+*.db-wal
+
+# Local container secrets/config
+.env
+docker/mosquitto/passwordfile
+
+# JWT keys and secrets directory
+secrets/
+
+# Temporary data files
+tmp_metric_data.json
+
+# Binary tools
+tools/eksctl/eksctl.exe

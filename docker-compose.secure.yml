@@ -1,0 +1,15 @@
+services:
+  mosquitto:
+    command: ["mosquitto", "-c", "/mosquitto/config/mosquitto.secure.conf"]
+    volumes:
+      - ./docker/mosquitto:/mosquitto/config:ro
+
+  telegraf:
+    environment:
+      MQTT_USERNAME: ${MQTT_USERNAME:?Set MQTT_USERNAME in your environment}
+      MQTT_PASSWORD: ${MQTT_PASSWORD:?Set MQTT_PASSWORD in your environment}
+
+  sensor-app:
+    environment:
+      MQTT_USERNAME: ${MQTT_USERNAME:?Set MQTT_USERNAME in your environment}
+      MQTT_PASSWORD: ${MQTT_PASSWORD:?Set MQTT_PASSWORD in your environment}

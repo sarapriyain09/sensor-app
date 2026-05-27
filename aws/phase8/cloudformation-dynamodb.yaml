@@ -1,0 +1,242 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "sensor-app Phase 8 (DynamoDB): IoT Rule -> existing Lambda ingestion -> DynamoDB + Streams -> Metrics Lambda -> CloudWatch (for Managed Grafana)"
+
+Parameters:
+  TopicFilter:
+    Type: String
+    Default: "factory/+/telemetry"
+    Description: "IoT topic filter to ingest"
+  IotRuleName:
+    Type: String
+    Default: "sensor_app_telemetry_to_dynamodb"
+
+  IngestionLambdaArn:
+    Type: String
+    Description: "ARN of the Lambda you already created/configured that writes telemetry into DynamoDB"
+
+  DynamoTableName:
+    Type: String
+    Default: "factoryTelemetry"
+
+  UseExistingTable:
+    Type: String
+    AllowedValues: ["true", "false"]
+    Default: "false"
+    Description: "If true, do not create a DynamoDB table; use an already-existing table and provide its Stream ARN."
+
+  ExistingDynamoTableStreamArn:
+    Type: String
+    Default: ""
+    Description: "Required when UseExistingTable=true. Example: arn:aws:dynamodb:REGION:ACCOUNT:table/TABLE/stream/TIMESTAMP"
+
+  PartitionKeyName:
+    Type: String
+    Default: "machine_id"
+
+  SortKeyName:
+    Type: String
+    Default: "timestamp"
+
+  MetricsNamespace:
+    Type: String
+    Default: "SensorApp/Telemetry"
+
+Conditions:
+  CreateTelemetryTable: !Equals [!Ref UseExistingTable, "false"]
+
+Resources:
+  TelemetryTable:
+    Type: AWS::DynamoDB::Table
+    Condition: CreateTelemetryTable
+    Properties:
+      TableName: !Ref DynamoTableName
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: !Ref PartitionKeyName
+          AttributeType: S
+        - AttributeName: !Ref SortKeyName
+          AttributeType: S
+      KeySchema:
+        - AttributeName: !Ref PartitionKeyName
+          KeyType: HASH
+        - AttributeName: !Ref SortKeyName
+          KeyType: RANGE
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
+
+  # Allow IoT Rule to invoke your existing ingestion Lambda
+  IotInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref IngestionLambdaArn
+      Principal: iot.amazonaws.com
+      SourceArn: !Sub "arn:aws:iot:${AWS::Region}:${AWS::AccountId}:rule/${IotRuleName}"
+
+  TelemetryIngestRule:
+    Type: AWS::IoT::TopicRule
+    Properties:
+      RuleName: !Ref IotRuleName
+      TopicRulePayload:
+        AwsIotSqlVersion: "2016-03-23"
+        Sql: !Sub "SELECT * FROM '${TopicFilter}'"
+        RuleDisabled: false
+        Actions:
+          - Lambda:
+              FunctionArn: !Ref IngestionLambdaArn
+
+  MetricsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: "sensor-app-dynamo-stream-to-cloudwatch"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - dynamodb:DescribeStream
+                  - dynamodb:GetRecords
+                  - dynamodb:GetShardIterator
+                  - dynamodb:ListStreams
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - cloudwatch:PutMetricData
+                Resource: "*"
+
+  StreamToMetricsFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: "sensor-app-dynamo-stream-to-metrics"
+      Runtime: python3.11
+      Handler: index.handler
+      Role: !GetAtt MetricsRole.Arn
+      Timeout: 30
+      MemorySize: 256
+      Environment:
+        Variables:
+          METRICS_NAMESPACE: !Ref MetricsNamespace
+          MACHINE_DIMENSION_NAME: "MachineId"
+      Code:
+        ZipFile: |
+          import os
+          from decimal import Decimal
+
+          import boto3
+
+
+          cloudwatch = boto3.client("cloudwatch")
+
+          METRICS_NAMESPACE = os.environ.get("METRICS_NAMESPACE", "SensorApp/Telemetry")
+          MACHINE_DIMENSION_NAME = os.environ.get("MACHINE_DIMENSION_NAME", "MachineId")
+
+
+          def _as_float(value):
+              if value is None:
+                  return None
+              if isinstance(value, (int, float)):
+                  return float(value)
+              if isinstance(value, Decimal):
+                  return float(value)
+              try:
+                  return float(str(value))
+              except Exception:
+                  return None
+
+
+          def _ddb_to_python(attr):
+              # Minimal DynamoDB JSON deserializer for the fields we care about.
+              if not isinstance(attr, dict) or len(attr) != 1:
+                  return None
+              t, v = next(iter(attr.items()))
+              if t == "S":
+                  return v
+              if t == "N":
+                  try:
+                      return Decimal(v)
+                  except Exception:
+                      return v
+              if t == "BOOL":
+                  return bool(v)
+              if t == "M":
+                  return {k: _ddb_to_python(val) for k, val in v.items()}
+              if t == "L":
+                  return [_ddb_to_python(x) for x in v]
+              return None
+
+
+          def handler(event, context):
+              metric_data = []
+
+              for record in event.get("Records", []):
+                  if record.get("eventName") not in ("INSERT", "MODIFY"):
+                      continue
+
+                  new_image = (record.get("dynamodb") or {}).get("NewImage") or {}
+                  item = {k: _ddb_to_python(v) for k, v in new_image.items()}
+
+                  machine_id = item.get("machine_id") or item.get("machineId") or "unknown"
+                  dims = [{"Name": MACHINE_DIMENSION_NAME, "Value": str(machine_id)}]
+
+                  # Map to metrics. Adjust these keys to match your Lambda schema.
+                  fields = {
+                      "temperature_c": item.get("temperature_c"),
+                      "vibration_mm_s": item.get("vibration_mm_s"),
+                      "vibration": item.get("vibration"),
+                      "rpm": item.get("rpm"),
+                      "pressure_bar": item.get("pressure_bar"),
+                      "pressure": item.get("pressure"),
+                  }
+
+                  for name, raw in fields.items():
+                      val = _as_float(raw)
+                      if val is None:
+                          continue
+                      metric_data.append({"MetricName": name, "Dimensions": dims, "Value": val, "Unit": "None"})
+
+                  state = str(item.get("state") or "").upper()
+                  if state == "FAULT":
+                      metric_data.append({"MetricName": "fault", "Dimensions": dims, "Value": 1.0, "Unit": "Count"})
+
+              # CloudWatch PutMetricData limit: 20 metrics per call.
+              for i in range(0, len(metric_data), 20):
+                  cloudwatch.put_metric_data(Namespace=METRICS_NAMESPACE, MetricData=metric_data[i : i + 20])
+
+              return {"ok": True, "metrics": len(metric_data)}
+
+  StreamEventMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      EventSourceArn: !If [CreateTelemetryTable, !GetAtt TelemetryTable.StreamArn, !Ref ExistingDynamoTableStreamArn]
+      FunctionName: !GetAtt StreamToMetricsFunction.Arn
+      StartingPosition: LATEST
+      BatchSize: 100
+      MaximumBatchingWindowInSeconds: 5
+      Enabled: true
+
+Outputs:
+  DynamoTableName:
+    Value: !Ref DynamoTableName
+  DynamoTableStreamArn:
+    Value: !If [CreateTelemetryTable, !GetAtt TelemetryTable.StreamArn, !Ref ExistingDynamoTableStreamArn]
+  IotRuleName:
+    Value: !Ref IotRuleName
+  MetricsNamespace:
+    Value: !Ref MetricsNamespace
+  StreamToMetricsFunctionName:
+    Value: !Ref StreamToMetricsFunction
