@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reliability Software — MTBF.co.uk | Splendid Technology</title>
+  <meta name="description" content="Reliability engineering software for SMEs. MTBF, MTTR, availability calculations, asset management and maintenance analytics. Subscribe at MTBF.co.uk — a Splendid Technology product." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:     #0a1628;
+      --navy2:    #112240;
+      --blue:     #1a56db;
+      --blue-lt:  #3b82f6;
+      --green:    #16a34a;
+      --green-bg: #16a34a;
+      --white:    #ffffff;
+      --gray-50:  #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-400: #9ca3af;
+      --gray-600: #4b5563;
+      --gray-700: #374151;
+      --gray-900: #111827;
+      --amber:    #f59e0b;
+      --red:      #dc2626;
+      --radius:   8px;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      color: var(--gray-900);
+      background: var(--white);
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.6;
+    }
+
+    a { text-decoration: none; color: inherit; }
+
+    /* ── Top header bar ── */
+    .top-header {
+      background: var(--navy);
+      padding: 1.25rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .logo-area {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .logo-img {
+      width: 160px;
+      height: auto;
+    }
+
+    /* SVG placeholder logo matching Splendid style */
+    .logo-svg {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+    }
+
+    .logo-circle {
+      width: 52px; height: 52px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #1a8fe3, #0a5fa8);
+      display: flex; align-items: center; justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .logo-circle::before {
+      content: 'S';
+      color: #fff;
+      font-size: 1.5rem;
+      font-weight: 800;
+      font-style: italic;
+    }
+
+    .logo-text-group { display: flex; flex-direction: column; }
+    .logo-name {
+      font-size: 1.6rem;
+      font-weight: 800;
+      font-style: italic;
+      color: var(--white);
+      letter-spacing: -.02em;
+      line-height: 1;
+    }
+    .logo-tagline {
+      font-size: .72rem;
+      color: rgba(255,255,255,.5);
+      letter-spacing: .04em;
+    }
+    .logo-sub {
+      font-size: .72rem;
+      color: rgba(255,255,255,.5);
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      margin-left: 1.5rem;
+      padding-left: 1.5rem;
+      border-left: 1px solid rgba(255,255,255,.15);
+      align-self: center;
+    }
+    .header-email {
+      font-size: .85rem;
+      color: rgba(255,255,255,.75);
+    }
+    .header-email:hover { color: var(--white); }
+
+    /* ── Navigation ── */
+    nav {
+      background: var(--white);
+      border-bottom: 1px solid var(--gray-200);
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      gap: 0;
+      overflow-x: auto;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 1px 4px rgba(0,0,0,.07);
+    }
+    nav a {
+      display: inline-block;
+      padding: 1rem 1.1rem;
+      font-size: .82rem;
+      font-weight: 500;
+      color: var(--gray-700);
+      white-space: nowrap;
+      border-bottom: 2px solid transparent;
+      transition: color .2s, border-color .2s;
+    }
+    nav a:hover { color: var(--blue); }
+    .nav-active {
+      background: var(--green-bg);
+      color: var(--white) !important;
+      font-weight: 700;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      font-size: .75rem !important;
+      padding: .55rem 1rem !important;
+      border-radius: 4px;
+      margin: .4rem .5rem;
+    }
+    .nav-highlight {
+      border: 1px solid var(--amber);
+      color: var(--amber) !important;
+      border-radius: 4px;
+      padding: .5rem 1rem !important;
+      margin: .4rem .25rem;
+    }
+    .nav-cta {
+      background: var(--green-bg);
+      color: var(--white) !important;
+      border-radius: 4px;
+      padding: .55rem 1.25rem !important;
+      margin: .4rem .5rem;
+      font-weight: 600;
+    }
+
+    /* ── Page content wrapper ── */
+    .page-content {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2.5rem 2rem 4rem;
+    }
+
+    /* ── Breadcrumb ── */
+    .breadcrumb {
+      font-size: .82rem;
+      color: var(--gray-400);
+      margin-bottom: 2rem;
+    }
+    .breadcrumb a { color: var(--gray-400); }
+    .breadcrumb a:hover { color: var(--blue); }
+    .breadcrumb span { margin: 0 .4rem; }
+
+    /* ── Section label ── */
+    .section-label {
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--blue);
+      margin-bottom: .75rem;
+    }
+
+    /* ── Hero ── */
+    .hero { margin-bottom: 4rem; }
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 800;
+      letter-spacing: -.025em;
+      color: var(--gray-900);
+      line-height: 1.15;
+      margin-bottom: 1rem;
+    }
+    .hero-sub {
+      font-size: 1.1rem;
+      color: var(--gray-600);
+      max-width: 600px;
+      margin-bottom: 2rem;
+    }
+    .hero-actions { display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; }
+    .btn-primary {
+      display: inline-block;
+      padding: .8rem 1.75rem;
+      background: var(--blue);
+      color: var(--white);
+      font-size: .95rem; font-weight: 600; font-family: inherit;
+      border-radius: var(--radius);
+      border: none; cursor: pointer;
+      transition: background .2s, transform .15s;
+    }
+    .btn-primary:hover { background: #1443b0; transform: translateY(-1px); }
+    .btn-outline {
+      display: inline-block;
+      padding: .8rem 1.75rem;
+      border: 1.5px solid var(--gray-200);
+      color: var(--gray-700);
+      font-size: .95rem; font-weight: 500; font-family: inherit;
+      border-radius: var(--radius);
+      background: transparent;
+      transition: border-color .2s, color .2s;
+    }
+    .btn-outline:hover { border-color: var(--blue); color: var(--blue); }
+
+    /* coming-soon banner */
+    .launch-banner {
+      display: inline-flex; align-items: center; gap: .6rem;
+      background: #fef9c3;
+      border: 1px solid #fde047;
+      border-radius: 6px;
+      padding: .55rem 1rem;
+      font-size: .82rem; font-weight: 600; color: #713f12;
+      margin-bottom: 1.75rem;
+    }
+    .launch-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--amber);
+      animation: pulse 1.8s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50%      { opacity: .4; transform: scale(1.4); }
+    }
+
+    /* ── Divider ── */
+    hr { border: none; border-top: 1px solid var(--gray-200); margin: 3.5rem 0; }
+
+    /* ── Problem section ── */
+    .problem-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      margin-top: 2rem;
+    }
+    .problem-col { padding: 1.75rem; border-radius: var(--radius); }
+    .problem-col.bad { background: #fef2f2; border: 1px solid #fecaca; }
+    .problem-col.good { background: #f0fdf4; border: 1px solid #bbf7d0; }
+    .problem-col h3 { font-size: .75rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 1.25rem; }
+    .problem-col.bad h3 { color: var(--red); }
+    .problem-col.good h3 { color: var(--green); }
+    .problem-list { list-style: none; }
+    .problem-list li {
+      font-size: .9rem;
+      color: var(--gray-700);
+      padding: .4rem 0;
+      display: flex; align-items: flex-start; gap: .6rem;
+      border-bottom: 1px solid rgba(0,0,0,.05);
+    }
+    .problem-list li:last-child { border-bottom: none; }
+    .x { color: var(--red); font-weight: 700; flex-shrink: 0; }
+    .ck { color: var(--green); font-weight: 700; flex-shrink: 0; }
+
+    /* ── Features grid ── */
+    .section-header { margin-bottom: 2.5rem; }
+    .section-header h2 {
+      font-size: clamp(1.5rem, 3.5vw, 2rem);
+      font-weight: 800; letter-spacing: -.02em;
+      color: var(--gray-900);
+      margin-bottom: .5rem;
+    }
+    .section-header p { font-size: .95rem; color: var(--gray-600); max-width: 520px; }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+    .feature-card {
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      padding: 1.75rem;
+      background: var(--white);
+      transition: box-shadow .2s, border-color .2s;
+    }
+    .feature-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,.08); border-color: var(--blue-lt); }
+    .feature-icon { font-size: 1.75rem; margin-bottom: .85rem; }
+    .feature-card h3 { font-size: 1rem; font-weight: 700; color: var(--gray-900); margin-bottom: .4rem; }
+    .feature-card p { font-size: .86rem; color: var(--gray-600); margin-bottom: .85rem; }
+    .feature-list { list-style: none; }
+    .feature-list li {
+      font-size: .83rem; color: var(--gray-700);
+      padding: .25rem 0;
+      display: flex; align-items: center; gap: .5rem;
+    }
+    .feature-list li::before { content: '→'; color: var(--blue); font-size: .8rem; flex-shrink: 0; }
+
+    /* ── KPI metrics ── */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.25rem;
+      margin-top: 2rem;
+    }
+    .kpi-card {
+      background: var(--navy);
+      color: var(--white);
+      border-radius: var(--radius);
+      padding: 1.75rem;
+      text-align: center;
+    }
+    .kpi-abbr {
+      font-size: .72rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+      color: #93c5fd;
+      margin-bottom: .35rem;
+    }
+    .kpi-name { font-size: .95rem; font-weight: 600; color: var(--white); margin-bottom: .85rem; }
+    .kpi-formula {
+      font-family: 'Courier New', monospace;
+      font-size: .85rem;
+      background: rgba(255,255,255,.1);
+      color: #bae6fd;
+      border-radius: 6px;
+      padding: .5rem .85rem;
+      margin-bottom: .7rem;
+    }
+    .kpi-desc { font-size: .78rem; color: rgba(255,255,255,.5); }
+
+    /* ── How it works ── */
+    .steps { margin-top: 2rem; display: flex; flex-direction: column; gap: 1.5rem; }
+    .step { display: flex; gap: 1.5rem; align-items: flex-start; }
+    .step-num {
+      flex-shrink: 0;
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: var(--blue);
+      color: var(--white);
+      display: flex; align-items: center; justify-content: center;
+      font-size: .95rem; font-weight: 700;
+    }
+    .step-body h3 { font-size: 1rem; font-weight: 700; color: var(--gray-900); margin-bottom: .3rem; }
+    .step-body p { font-size: .88rem; color: var(--gray-600); }
+
+    /* ── Pricing ── */
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+    .price-card {
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      padding: 2rem;
+      background: var(--white);
+      position: relative;
+    }
+    .price-card.popular {
+      border-color: var(--blue);
+      border-width: 2px;
+    }
+    .popular-tag {
+      position: absolute; top: -12px; left: 1.5rem;
+      background: var(--blue);
+      color: var(--white);
+      font-size: .7rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
+      padding: .25rem .8rem;
+      border-radius: 100px;
+    }
+    .price-tier { font-size: .72rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--gray-400); margin-bottom: .4rem; }
+    .price-amount { font-size: 2.5rem; font-weight: 800; color: var(--gray-900); letter-spacing: -.03em; line-height: 1; }
+    .price-amount span { font-size: 1rem; font-weight: 400; color: var(--gray-400); }
+    .price-sub { font-size: .82rem; color: var(--gray-400); margin: .4rem 0 1.25rem; }
+    .price-features { list-style: none; margin-bottom: 1.75rem; }
+    .price-features li {
+      font-size: .86rem; color: var(--gray-700);
+      padding: .35rem 0;
+      border-bottom: 1px solid var(--gray-100);
+      display: flex; align-items: center; gap: .55rem;
+    }
+    .price-features li:last-child { border-bottom: none; }
+    .pck { color: var(--green); font-weight: 700; }
+    .pcx { color: var(--gray-200); font-weight: 700; }
+    .btn-subscribe {
+      display: block; width: 100%;
+      padding: .8rem;
+      font-size: .9rem; font-weight: 600; font-family: inherit;
+      border-radius: var(--radius);
+      cursor: pointer; border: none;
+      text-align: center;
+      transition: opacity .2s, transform .15s;
+    }
+    .btn-subscribe:hover { opacity: .88; transform: translateY(-1px); }
+    .btn-subscribe.outline { background: transparent; border: 1.5px solid var(--gray-200); color: var(--gray-700); }
+    .btn-subscribe.solid { background: var(--blue); color: var(--white); }
+    .btn-subscribe.dark { background: var(--navy); color: var(--white); }
+
+    /* ── CTA section ── */
+    .cta-section {
+      background: var(--navy);
+      border-radius: 12px;
+      padding: 3rem 2.5rem;
+      text-align: center;
+      margin-top: 4rem;
+    }
+    .cta-section h2 {
+      font-size: clamp(1.5rem, 3.5vw, 2rem);
+      font-weight: 800;
+      color: var(--white);
+      margin-bottom: .75rem;
+      letter-spacing: -.02em;
+    }
+    .cta-section p { font-size: 1rem; color: rgba(255,255,255,.65); margin-bottom: 2rem; }
+    .cta-actions { display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap; }
+    .btn-white {
+      display: inline-block;
+      padding: .8rem 1.75rem;
+      background: var(--white);
+      color: var(--navy);
+      font-size: .95rem; font-weight: 700; border-radius: var(--radius);
+      border: none; cursor: pointer; font-family: inherit;
+      transition: opacity .2s;
+    }
+    .btn-white:hover { opacity: .92; }
+    .btn-outline-white {
+      display: inline-block;
+      padding: .8rem 1.75rem;
+      background: transparent;
+      color: var(--white);
+      border: 1.5px solid rgba(255,255,255,.35);
+      font-size: .95rem; font-weight: 500; border-radius: var(--radius);
+      font-family: inherit;
+      transition: border-color .2s;
+    }
+    .btn-outline-white:hover { border-color: rgba(255,255,255,.7); }
+
+    /* ── Back link ── */
+    .back-link {
+      display: inline-flex; align-items: center; gap: .4rem;
+      font-size: .85rem; color: var(--gray-400);
+      margin-bottom: 2.5rem;
+      transition: color .2s;
+    }
+    .back-link:hover { color: var(--blue); }
+
+    /* ── Footer ── */
+    footer {
+      background: var(--navy);
+      color: rgba(255,255,255,.55);
+      padding: 3rem 2rem 2rem;
+      margin-top: 5rem;
+      font-size: .85rem;
+    }
+    .footer-inner {
+      max-width: 1100px; margin: 0 auto;
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 2.5rem;
+      margin-bottom: 2.5rem;
+    }
+    .footer-brand p { font-size: .83rem; color: rgba(255,255,255,.45); margin-top: .75rem; max-width: 280px; line-height: 1.65; }
+    .footer-brand address { font-style: normal; font-size: .82rem; color: rgba(255,255,255,.4); margin-top: .85rem; line-height: 1.8; }
+    .footer-brand address a { color: rgba(255,255,255,.55); }
+    .footer-col h4 { font-size: .72rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,.6); margin-bottom: 1rem; }
+    .footer-col ul { list-style: none; }
+    .footer-col ul li { margin-bottom: .5rem; }
+    .footer-col ul li a { color: rgba(255,255,255,.45); font-size: .83rem; transition: color .2s; }
+    .footer-col ul li a:hover { color: var(--white); }
+    .footer-bottom {
+      max-width: 1100px; margin: 0 auto;
+      border-top: 1px solid rgba(255,255,255,.08);
+      padding-top: 1.5rem;
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .75rem;
+      font-size: .78rem; color: rgba(255,255,255,.35);
+    }
+    .footer-bottom a { color: rgba(255,255,255,.4); margin-left: 1.25rem; }
+    .footer-bottom a:hover { color: var(--white); }
+
+    /* ── WhatsApp button ── */
+    .whatsapp-btn {
+      position: fixed;
+      bottom: 2rem; right: 2rem;
+      width: 52px; height: 52px;
+      border-radius: 50%;
+      background: #25d366;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 16px rgba(37,211,102,.4);
+      z-index: 999;
+      transition: transform .2s;
+    }
+    .whatsapp-btn:hover { transform: scale(1.08); }
+    .whatsapp-btn svg { width: 28px; height: 28px; fill: white; }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .problem-grid { grid-template-columns: 1fr; }
+      .footer-inner { grid-template-columns: 1fr 1fr; }
+      .top-header { flex-direction: column; align-items: flex-start; }
+      .logo-sub { display: none; }
+    }
+    @media (max-width: 500px) {
+      .footer-inner { grid-template-columns: 1fr; }
+      .page-content { padding: 1.5rem 1rem 3rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Top Header ── -->
+<div class="top-header">
+  <div class="logo-area">
+    <a href="https://www.splendidtechnology.co.uk/" class="logo-svg">
+      <div class="logo-circle"></div>
+      <div class="logo-text-group">
+        <span class="logo-name">Splendid</span>
+        <span class="logo-tagline">Make you delightful</span>
+      </div>
+    </a>
+    <span class="logo-sub">Industrial IoT &amp; Process Automation</span>
+  </div>
+  <a href="mailto:info@splendidtechnology.co.uk" class="header-email">info@splendidtechnology.co.uk</a>
+</div>
+
+<!-- ── Navigation ── -->
+<nav>
+  <a href="https://www.splendidtechnology.co.uk/industrial-iot" class="nav-active">Industrial IoT</a>
+  <a href="https://www.splendidtechnology.co.uk/industrial-iot/smart-motor-monitoring">Smart Motor Monitoring</a>
+  <a href="https://www.splendidtechnology.co.uk/industrial-iot/predictive-maintenance">Predictive Maintenance</a>
+  <a href="https://www.splendidtechnology.co.uk/industrial-iot/portable-diagnostic-kit">Portable Diagnostic Kit</a>
+  <a href="https://www.splendidtechnology.co.uk/industrial-iot/industry-40-solutions">Industry 4.0</a>
+  <a href="https://www.splendidtechnology.co.uk/services">AI Automation</a>
+  <a href="https://www.splendidtechnology.co.uk/proof-of-concept" class="nav-highlight">Innovation Lab</a>
+  <a href="https://www.splendidtechnology.co.uk/blog">Blog</a>
+  <a href="https://www.splendidtechnology.co.uk/about">About</a>
+  <a href="https://www.splendidtechnology.co.uk/contact" class="nav-cta">Contact</a>
+</nav>
+
+<!-- ── Page Content ── -->
+<div class="page-content">
+
+  <!-- Breadcrumb -->
+  <nav class="breadcrumb" aria-label="breadcrumb">
+    <a href="https://www.splendidtechnology.co.uk/">Home</a>
+    <span>/</span>
+    <a href="https://www.splendidtechnology.co.uk/industrial-iot">Industrial IoT</a>
+    <span>/</span>
+    Reliability Software
+  </nav>
+
+  <!-- Back link -->
+  <a href="https://www.splendidtechnology.co.uk/industrial-iot" class="back-link">← Back to Industrial IoT</a>
+
+  <!-- ── Hero ── -->
+  <section class="hero">
+    <p class="section-label">Industrial IoT — SaaS Software</p>
+
+    <div class="launch-banner">
+      <span class="launch-dot"></span>
+      Now Launching — Subscribe Early for 3 Months Free
+    </div>
+
+    <h1>Reliability Software<br>for Engineers &amp; SMEs</h1>
+    <p class="hero-sub">
+      Stop managing maintenance in spreadsheets. MTBF.co.uk gives your team
+      automatic MTBF, MTTR and availability calculations, asset management, and
+      reliability dashboards — all in one simple subscription.
+    </p>
+
+    <div class="hero-actions">
+      <a href="https://www.mtbf.co.uk" class="btn-primary" target="_blank" rel="noopener">Subscribe at mtbf.co.uk →</a>
+      <a href="https://www.splendidtechnology.co.uk/contact" class="btn-outline">Talk to us first</a>
+    </div>
+  </section>
+
+  <hr />
+
+  <!-- ── Problem vs Solution ── -->
+  <section>
+    <p class="section-label">The Problem We Solve</p>
+    <div class="section-header">
+      <h2>Most SMEs have no visibility into asset reliability</h2>
+      <p>Without the right tools, maintenance teams react to failures instead of preventing them — costing time, money, and production.</p>
+    </div>
+
+    <div class="problem-grid">
+      <div class="problem-col bad">
+        <h3>What You May Be Doing Now</h3>
+        <ul class="problem-list">
+          <li><span class="x">✗</span> Maintenance tracked in Excel spreadsheets</li>
+          <li><span class="x">✗</span> No MTBF or MTTR — just gut feel</li>
+          <li><span class="x">✗</span> Can't identify your worst-performing assets</li>
+          <li><span class="x">✗</span> Management reports take hours to produce</li>
+          <li><span class="x">✗</span> Enterprise CMMS tools too expensive or too complex</li>
+          <li><span class="x">✗</span> Reactive repairs costing more than planned maintenance</li>
+        </ul>
+      </div>
+      <div class="problem-col good">
+        <h3>What MTBF.co.uk Gives You</h3>
+        <ul class="problem-list">
+          <li><span class="ck">✓</span> MTBF, MTTR, availability calculated automatically</li>
+          <li><span class="ck">✓</span> Clear dashboard showing which assets need attention</li>
+          <li><span class="ck">✓</span> Failure history and root cause records for every asset</li>
+          <li><span class="ck">✓</span> PDF and Excel reports generated in seconds</li>
+          <li><span class="ck">✓</span> Affordable subscription — from £29/month</li>
+          <li><span class="ck">✓</span> Designed for engineers, not IT departments</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <hr />
+
+  <!-- ── Core Reliability Metrics ── -->
+  <section>
+    <p class="section-label">Core Reliability Calculations</p>
+    <div class="section-header">
+      <h2>The metrics your engineers already use</h2>
+      <p>MTBF.co.uk computes these for every tracked asset, automatically, from your maintenance history.</p>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-abbr">MTBF</div>
+        <div class="kpi-name">Mean Time Between Failures</div>
+        <div class="kpi-formula">Total Uptime ÷ No. of Failures</div>
+        <div class="kpi-desc">How long equipment runs before the next breakdown.</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-abbr">MTTR</div>
+        <div class="kpi-name">Mean Time To Repair</div>
+        <div class="kpi-formula">Total Repair Time ÷ No. of Repairs</div>
+        <div class="kpi-desc">How fast your team restores failed equipment to service.</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-abbr">Availability</div>
+        <div class="kpi-name">Asset Availability %</div>
+        <div class="kpi-formula">MTBF ÷ (MTBF + MTTR) × 100</div>
+        <div class="kpi-desc">The percentage of time an asset is operational and ready.</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-abbr">Failure Rate</div>
+        <div class="kpi-name">Failure Rate (λ)</div>
+        <div class="kpi-formula">λ = 1 ÷ MTBF</div>
+        <div class="kpi-desc">Frequency of failures per unit of operating time.</div>
+      </div>
+    </div>
+  </section>
+
+  <hr />
+
+  <!-- ── Features ── -->
+  <section>
+    <p class="section-label">What the Software Includes</p>
+    <div class="section-header">
+      <h2>Everything a maintenance team needs</h2>
+      <p>Built for reliability engineers — not ERP consultants or IT teams.</p>
+    </div>
+
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">📐</div>
+        <h3>Reliability Calculations</h3>
+        <p>Automatic computation of all core reliability KPIs from your maintenance data.</p>
+        <ul class="feature-list">
+          <li>MTBF, MTTR, availability, failure rate</li>
+          <li>Downtime cost estimation</li>
+          <li>Planned vs unplanned breakdown split</li>
+        </ul>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">🏭</div>
+        <h3>Asset Management</h3>
+        <p>A single register for every machine and asset across your facility.</p>
+        <ul class="feature-list">
+          <li>Equipment and machine registry</li>
+          <li>Failure logs with root cause tagging</li>
+          <li>Planned and corrective maintenance records</li>
+          <li>Spare parts tracking</li>
+        </ul>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <h3>Reliability Dashboards</h3>
+        <p>Live visibility into the health and performance of your entire asset base.</p>
+        <ul class="feature-list">
+          <li>Reliability KPI overview</li>
+          <li>Downtime trend charts</li>
+          <li>Critical asset ranking</li>
+          <li>Maintenance cost tracking</li>
+        </ul>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">📄</div>
+        <h3>Reports</h3>
+        <p>Professional reports for engineers and management — ready in seconds.</p>
+        <ul class="feature-list">
+          <li>PDF report generation</li>
+          <li>Excel data export</li>
+          <li>Management summary view</li>
+          <li>Scheduled email reports</li>
+        </ul>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">🔌</div>
+        <h3>IoT Integration (Roadmap)</h3>
+        <p>Connect real sensor data from Splendid Technology hardware — automatic failure logging.</p>
+        <ul class="feature-list">
+          <li>MQTT sensor data ingestion</li>
+          <li>Temperature, vibration, pressure</li>
+          <li>Auto-generated failure events</li>
+          <li>Edge gateway compatible</li>
+        </ul>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">👥</div>
+        <h3>Multi-user Access</h3>
+        <p>Roles for engineers, managers and executives — across single or multiple sites.</p>
+        <ul class="feature-list">
+          <li>Role-based permissions</li>
+          <li>Multi-site asset views</li>
+          <li>Audit trail</li>
+          <li>SSO (Enterprise tier)</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <hr />
+
+  <!-- ── How It Works ── -->
+  <section>
+    <p class="section-label">How It Works</p>
+    <div class="section-header">
+      <h2>Up and running in minutes</h2>
+      <p>No installation. No IT department. Just log in and start tracking.</p>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h3>Choose a plan and subscribe at mtbf.co.uk</h3>
+          <p>Select Starter, Professional or Enterprise. Your account is created instantly — no contract, cancel any time.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h3>Add your assets and maintenance history</h3>
+          <p>Register your machines and equipment. Import existing records from Excel or start fresh. Takes minutes per asset.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h3>Log failures and maintenance events</h3>
+          <p>Every time an asset fails or is serviced, log it in the system. MTBF, MTTR and availability update automatically.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <h3>View dashboards, generate reports</h3>
+          <p>Your reliability KPIs update in real time. Generate PDF or Excel reports for management reviews at any time.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr />
+
+  <!-- ── Pricing ── -->
+  <section>
+    <p class="section-label">Subscription Pricing</p>
+    <div class="section-header">
+      <h2>Simple, transparent pricing — no setup fees</h2>
+      <p>All plans hosted at <strong>mtbf.co.uk</strong>. No contracts. Cancel any time.</p>
+    </div>
+
+    <div class="pricing-grid">
+
+      <div class="price-card">
+        <div class="price-tier">Starter</div>
+        <div class="price-amount">£29<span>/month</span></div>
+        <div class="price-sub">For small workshops and sole traders</div>
+        <ul class="price-features">
+          <li><span class="pck">✓</span> Up to 25 assets</li>
+          <li><span class="pck">✓</span> MTBF, MTTR, availability</li>
+          <li><span class="pck">✓</span> Failure logs &amp; maintenance records</li>
+          <li><span class="pck">✓</span> PDF &amp; Excel export</li>
+          <li><span class="pck">✓</span> 1 user</li>
+          <li><span class="pcx">✗</span> Multi-user access</li>
+          <li><span class="pcx">✗</span> IoT integration</li>
+        </ul>
+        <a href="https://www.mtbf.co.uk" class="btn-subscribe outline" target="_blank" rel="noopener">Subscribe →</a>
+      </div>
+
+      <div class="price-card popular">
+        <div class="popular-tag">Most Popular</div>
+        <div class="price-tier">Professional</div>
+        <div class="price-amount">£149<span>/month</span></div>
+        <div class="price-sub">For maintenance teams and engineering departments</div>
+        <ul class="price-features">
+          <li><span class="pck">✓</span> Unlimited assets</li>
+          <li><span class="pck">✓</span> All reliability calculations</li>
+          <li><span class="pck">✓</span> Advanced dashboards &amp; KPIs</li>
+          <li><span class="pck">✓</span> Scheduled email reports</li>
+          <li><span class="pck">✓</span> Up to 10 users</li>
+          <li><span class="pck">✓</span> Excel import</li>
+          <li><span class="pck">✓</span> REST API access</li>
+        </ul>
+        <a href="https://www.mtbf.co.uk" class="btn-subscribe solid" target="_blank" rel="noopener">Subscribe →</a>
+      </div>
+
+      <div class="price-card">
+        <div class="price-tier">Enterprise</div>
+        <div class="price-amount">£999<span>/month</span></div>
+        <div class="price-sub">For multi-site operations and compliance requirements</div>
+        <ul class="price-features">
+          <li><span class="pck">✓</span> Everything in Professional</li>
+          <li><span class="pck">✓</span> Multi-site management</li>
+          <li><span class="pck">✓</span> IoT &amp; sensor integration</li>
+          <li><span class="pck">✓</span> Weibull analysis</li>
+          <li><span class="pck">✓</span> Unlimited users + SSO</li>
+          <li><span class="pck">✓</span> Dedicated support + custom SLA</li>
+          <li><span class="pck">✓</span> Power BI / Grafana connector</li>
+        </ul>
+        <a href="https://www.splendidtechnology.co.uk/contact" class="btn-subscribe dark">Contact Us →</a>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── CTA ── -->
+  <div class="cta-section">
+    <h2>Start your free trial at MTBF.co.uk</h2>
+    <p>
+      Subscribe today and get 3 months free as an early adopter.
+      Built by the team at Splendid Technology — engineers, for engineers.
+    </p>
+    <div class="cta-actions">
+      <a href="https://www.mtbf.co.uk" class="btn-white" target="_blank" rel="noopener">Go to mtbf.co.uk →</a>
+      <a href="https://www.splendidtechnology.co.uk/contact" class="btn-outline-white">Talk to our team</a>
+    </div>
+  </div>
+
+</div><!-- /page-content -->
+
+<!-- ── Footer ── -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <div style="color:rgba(255,255,255,.85); font-size:1.1rem; font-weight:700; letter-spacing:-.01em;">Splendid Technology</div>
+      <p>A UK engineering technology company delivering smart monitoring, predictive maintenance, and AI-powered business process improvement for manufacturers and industrial SMEs.</p>
+      <address>
+        36 Glazebrook Road, Leicester, LE3 9NT<br>
+        <a href="mailto:info@splendidtechnology.co.uk">info@splendidtechnology.co.uk</a><br>
+        <a href="tel:+447721952967">+44 7721 952967</a>
+      </address>
+    </div>
+
+    <div class="footer-col">
+      <h4>Industrial IoT</h4>
+      <ul>
+        <li><a href="https://www.splendidtechnology.co.uk/industrial-iot">Overview</a></li>
+        <li><a href="https://www.splendidtechnology.co.uk/industrial-iot/smart-motor-monitoring">Smart Motor Monitoring</a></li>
+        <li><a href="https://www.splendidtechnology.co.uk/industrial-iot/predictive-maintenance">Predictive Maintenance</a></li>
+        <li><a href="https://www.splendidtechnology.co.uk/industrial-iot/portable-diagnostic-kit">Portable Diagnostic Kit</a></li>
+        <li><a href="https://www.splendidtechnology.co.uk/industrial-iot/industry-40-solutions">Industry 4.0</a></li>
+        <li><a href="https://www.splendidtechnology.co.uk/reliability-software" style="color:rgba(255,255,255,.7); font-weight:600">Reliability Software ↗</a></li>
+      </ul>
+    </div>
+
+    <div class="footer-col">
+      <h4>Business Improvement</h4>
+      <ul>
+        <li><a href="https://www.splendidtechnology.co.uk/services">AI Process Automation</a></li>
+        <li><a href="https://www.splendidtechnology.co.uk/blog">Insights &amp; Guides</a></li>
+      </ul>
+      <h4 style="margin-top:1.5rem;">Software</h4>
+      <ul>
+        <li><a href="https://www.mtbf.co.uk" target="_blank" rel="noopener" style="color:rgba(255,255,255,.7);">MTBF.co.uk ↗</a></li>
+      </ul>
+    </div>
+
+    <div class="footer-col">
+      <h4>Company</h4>
+      <ul>
+        <li><a href="https://www.splendidtechnology.co.uk/about">About</a></li>
+        <li><a href="https://www.splendidtechnology.co.uk/proof-of-concept">Innovation Lab</a></li>
+        <li><a href="https://www.splendidtechnology.co.uk/contact">Contact &amp; Book a Pilot</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <span>
+      © 2026 Splendid Technology Ltd. Registered in England &amp; Wales. Company No. 17245651
+    </span>
+    <div>
+      <a href="https://www.splendidtechnology.co.uk/privacy-policy">Privacy Policy</a>
+      <a href="https://www.splendidtechnology.co.uk/cookie-policy">Cookie Policy</a>
+    </div>
+  </div>
+</footer>
+
+<!-- ── WhatsApp button ── -->
+<a href="https://wa.me/447359631678" class="whatsapp-btn" title="Chat with us on WhatsApp" target="_blank" rel="noopener">
+  <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+    <path d="M16 .5C7.44.5.5 7.44.5 16c0 2.73.7 5.3 1.94 7.54L.5 31.5l8.18-1.9A15.45 15.45 0 0016 31.5C24.56 31.5 31.5 24.56 31.5 16S24.56.5 16 .5zm0 28.4a13.8 13.8 0 01-7.04-1.94l-.5-.3-5.17 1.2 1.22-5.04-.33-.52A13.85 13.85 0 0116 2.1c7.67 0 13.9 6.23 13.9 13.9S23.67 29.9 16 29.9zm7.6-10.4c-.42-.21-2.47-1.22-2.85-1.36-.38-.14-.65-.21-.93.2-.28.42-1.08 1.36-1.32 1.64-.24.28-.49.31-.91.1-.42-.21-1.77-.65-3.37-2.08-1.25-1.11-2.09-2.49-2.33-2.91-.24-.42-.03-.64.18-.85.19-.19.42-.49.63-.74.21-.24.28-.42.42-.7.14-.28.07-.52-.03-.73-.1-.21-.93-2.24-1.28-3.07-.34-.8-.68-.7-.93-.71h-.8c-.28 0-.72.1-1.1.52-.38.42-1.44 1.41-1.44 3.43s1.48 3.98 1.68 4.26c.21.28 2.9 4.42 7.04 6.2.98.42 1.75.68 2.35.86.99.31 1.88.27 2.6.16.79-.12 2.47-1.01 2.82-1.98.35-.97.35-1.8.24-1.98-.1-.17-.38-.28-.8-.49z"/>
+  </svg>
+</a>
+
+</body>
+</html>
