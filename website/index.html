@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MTBF.co.uk — Reliability Engineering Software for SMEs</title>
+  <meta name="description" content="Reliability assessment and maintenance analytics software built for engineers. MTBF, MTTR, availability calculations, asset management and dashboards — launching soon." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Reset & Variables ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:    #0f172a;
+      --navy2:   #1e293b;
+      --blue:    #2563eb;
+      --blue-lt: #3b82f6;
+      --teal:    #0ea5e9;
+      --green:   #10b981;
+      --amber:   #f59e0b;
+      --white:   #ffffff;
+      --gray-50: #f8fafc;
+      --gray-100:#f1f5f9;
+      --gray-200:#e2e8f0;
+      --gray-500:#64748b;
+      --gray-700:#334155;
+      --radius:  12px;
+      --shadow:  0 4px 24px rgba(0,0,0,.08);
+    }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--white);
+      color: var(--navy);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    /* ── Navbar ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1rem 2rem;
+      background: rgba(15,23,42,.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255,255,255,.07);
+    }
+
+    .nav-logo {
+      font-size: 1.35rem; font-weight: 800; letter-spacing: -.02em;
+      color: var(--white);
+    }
+    .nav-logo span { color: var(--teal); }
+
+    .nav-badge {
+      background: var(--amber);
+      color: var(--navy);
+      font-size: .7rem; font-weight: 700; letter-spacing: .08em;
+      text-transform: uppercase;
+      padding: .25rem .65rem;
+      border-radius: 100px;
+    }
+
+    .nav-links {
+      display: flex; gap: 2rem; list-style: none;
+    }
+    .nav-links a {
+      color: rgba(255,255,255,.7);
+      font-size: .9rem; font-weight: 500;
+      transition: color .2s;
+    }
+    .nav-links a:hover { color: var(--white); }
+
+    /* ── Hero ── */
+    .hero {
+      min-height: 100vh;
+      background: linear-gradient(135deg, var(--navy) 0%, #0c1e3c 60%, #0a2540 100%);
+      display: flex; align-items: center; justify-content: center;
+      text-align: center;
+      padding: 7rem 1.5rem 4rem;
+      position: relative; overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 80% 60% at 50% 40%, rgba(14,165,233,.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* subtle grid */
+    .hero::after {
+      content: '';
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+    }
+
+    .hero-inner { position: relative; z-index: 1; max-width: 760px; }
+
+    .hero-pill {
+      display: inline-flex; align-items: center; gap: .5rem;
+      background: rgba(14,165,233,.15);
+      border: 1px solid rgba(14,165,233,.3);
+      color: var(--teal);
+      font-size: .8rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
+      padding: .35rem 1rem;
+      border-radius: 100px;
+      margin-bottom: 1.75rem;
+    }
+    .hero-pill .dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--teal);
+      animation: pulse 1.8s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50%      { opacity: .4; transform: scale(1.4); }
+    }
+
+    .hero h1 {
+      font-size: clamp(2.4rem, 6vw, 4rem);
+      font-weight: 800; letter-spacing: -.03em;
+      color: var(--white);
+      line-height: 1.15;
+      margin-bottom: 1.25rem;
+    }
+    .hero h1 em {
+      font-style: normal;
+      background: linear-gradient(90deg, var(--teal), var(--blue-lt));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-sub {
+      font-size: 1.15rem; color: rgba(255,255,255,.65);
+      max-width: 540px; margin: 0 auto 2.5rem;
+    }
+
+    /* countdown */
+    .countdown {
+      display: flex; justify-content: center; gap: 1.5rem;
+      margin-bottom: 2.75rem;
+    }
+    .cd-block {
+      display: flex; flex-direction: column; align-items: center;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: var(--radius);
+      padding: .85rem 1.25rem;
+      min-width: 72px;
+    }
+    .cd-num {
+      font-size: 2rem; font-weight: 700; color: var(--white);
+      font-variant-numeric: tabular-nums;
+    }
+    .cd-label { font-size: .68rem; color: rgba(255,255,255,.45); letter-spacing: .08em; text-transform: uppercase; }
+
+    /* email form */
+    .email-form {
+      display: flex; gap: .75rem; flex-wrap: wrap;
+      justify-content: center; max-width: 480px; margin: 0 auto;
+    }
+    .email-form input[type="email"] {
+      flex: 1; min-width: 220px;
+      padding: .85rem 1.25rem;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: var(--radius);
+      background: rgba(255,255,255,.08);
+      color: var(--white);
+      font-size: .95rem; font-family: inherit;
+      outline: none;
+      transition: border-color .2s, background .2s;
+    }
+    .email-form input::placeholder { color: rgba(255,255,255,.4); }
+    .email-form input:focus {
+      border-color: var(--teal);
+      background: rgba(255,255,255,.12);
+    }
+    .btn-primary {
+      padding: .85rem 1.75rem;
+      background: var(--blue);
+      color: var(--white);
+      font-size: .95rem; font-weight: 600; font-family: inherit;
+      border: none; border-radius: var(--radius);
+      cursor: pointer; white-space: nowrap;
+      transition: background .2s, transform .15s;
+    }
+    .btn-primary:hover { background: var(--blue-lt); transform: translateY(-1px); }
+
+    .form-note { font-size: .78rem; color: rgba(255,255,255,.35); margin-top: .75rem; }
+
+    /* success message */
+    #success-msg {
+      display: none;
+      background: rgba(16,185,129,.15);
+      border: 1px solid rgba(16,185,129,.4);
+      color: var(--green);
+      padding: .85rem 1.5rem;
+      border-radius: var(--radius);
+      font-size: .9rem; font-weight: 500;
+      margin-top: 1rem;
+    }
+
+    /* ── Section commons ── */
+    section { padding: 5.5rem 1.5rem; }
+    .container { max-width: 1100px; margin: 0 auto; }
+    .section-tag {
+      display: inline-block;
+      font-size: .75rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+      color: var(--blue);
+      margin-bottom: .75rem;
+    }
+    .section-title {
+      font-size: clamp(1.75rem, 4vw, 2.5rem);
+      font-weight: 800; letter-spacing: -.025em;
+      color: var(--navy);
+      margin-bottom: 1rem;
+    }
+    .section-sub {
+      font-size: 1.05rem; color: var(--gray-500);
+      max-width: 560px;
+    }
+
+    /* ── Problem ── */
+    .problem { background: var(--gray-50); }
+    .problem-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.5rem;
+      margin-top: 3rem;
+    }
+    .problem-card {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      padding: 1.75rem;
+      box-shadow: var(--shadow);
+    }
+    .problem-icon { font-size: 2rem; margin-bottom: .75rem; }
+    .problem-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: .4rem; }
+    .problem-card p { font-size: .88rem; color: var(--gray-500); }
+
+    /* ── Features ── */
+    .features { background: var(--white); }
+    .features-header { margin-bottom: 3.5rem; }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+    .feature-card {
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      padding: 2rem;
+      transition: box-shadow .25s, border-color .25s, transform .2s;
+    }
+    .feature-card:hover {
+      box-shadow: var(--shadow);
+      border-color: var(--blue-lt);
+      transform: translateY(-3px);
+    }
+    .feature-icon {
+      width: 48px; height: 48px;
+      background: linear-gradient(135deg, #eff6ff, #dbeafe);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem;
+      margin-bottom: 1.1rem;
+    }
+    .feature-card h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: .5rem; }
+    .feature-card p { font-size: .88rem; color: var(--gray-500); }
+    .feature-list {
+      list-style: none;
+      margin-top: .9rem;
+    }
+    .feature-list li {
+      font-size: .85rem; color: var(--gray-700);
+      padding: .25rem 0;
+      display: flex; align-items: center; gap: .5rem;
+    }
+    .feature-list li::before {
+      content: '✓';
+      color: var(--green);
+      font-weight: 700; font-size: .8rem;
+      flex-shrink: 0;
+    }
+
+    /* ── KPI Formulas ── */
+    .formulas { background: var(--navy); color: var(--white); }
+    .formulas .section-title { color: var(--white); }
+    .formulas .section-sub { color: rgba(255,255,255,.6); }
+    .formula-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.25rem;
+      margin-top: 3rem;
+    }
+    .formula-card {
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: var(--radius);
+      padding: 1.75rem;
+      text-align: center;
+    }
+    .formula-name {
+      font-size: .75rem; font-weight: 700; letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--teal);
+      margin-bottom: .5rem;
+    }
+    .formula-full { font-size: 1rem; font-weight: 600; color: var(--white); margin-bottom: .85rem; }
+    .formula-eq {
+      font-family: 'Courier New', monospace;
+      font-size: .9rem;
+      background: rgba(255,255,255,.08);
+      color: #a5f3fc;
+      border-radius: 8px;
+      padding: .6rem 1rem;
+      margin-bottom: .75rem;
+    }
+    .formula-desc { font-size: .82rem; color: rgba(255,255,255,.5); }
+
+    /* ── Pricing ── */
+    .pricing { background: var(--gray-50); }
+    .pricing-header { margin-bottom: 3.5rem; }
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      align-items: start;
+    }
+    .price-card {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      padding: 2.25rem;
+      box-shadow: var(--shadow);
+      position: relative;
+    }
+    .price-card.popular {
+      border: 2px solid var(--blue);
+      transform: scale(1.03);
+    }
+    .popular-badge {
+      position: absolute; top: -13px; left: 50%; transform: translateX(-50%);
+      background: var(--blue);
+      color: var(--white);
+      font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+      padding: .3rem .9rem;
+      border-radius: 100px;
+    }
+    .price-tier { font-size: .8rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--gray-500); margin-bottom: .5rem; }
+    .price-amount { font-size: 2.75rem; font-weight: 800; color: var(--navy); letter-spacing: -.03em; }
+    .price-amount span { font-size: 1rem; font-weight: 500; color: var(--gray-500); }
+    .price-desc { font-size: .88rem; color: var(--gray-500); margin: .6rem 0 1.5rem; }
+    .price-features { list-style: none; margin-bottom: 2rem; }
+    .price-features li {
+      font-size: .88rem; color: var(--gray-700);
+      padding: .4rem 0;
+      border-bottom: 1px solid var(--gray-100);
+      display: flex; align-items: center; gap: .6rem;
+    }
+    .price-features li:last-child { border-bottom: none; }
+    .check { color: var(--green); font-weight: 700; }
+    .cross { color: var(--gray-200); font-weight: 700; }
+    .btn-plan {
+      display: block; width: 100%;
+      padding: .85rem;
+      border-radius: var(--radius);
+      font-size: .95rem; font-weight: 600; font-family: inherit;
+      cursor: pointer; border: none;
+      transition: opacity .2s, transform .15s;
+      text-align: center;
+    }
+    .btn-plan:hover { opacity: .88; transform: translateY(-1px); }
+    .btn-plan.outline {
+      background: transparent;
+      border: 2px solid var(--gray-200);
+      color: var(--navy);
+    }
+    .btn-plan.solid {
+      background: var(--blue);
+      color: var(--white);
+    }
+    .btn-plan.dark {
+      background: var(--navy);
+      color: var(--white);
+    }
+
+    /* per-asset note */
+    .per-asset-note {
+      margin-top: 2.5rem;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: var(--radius);
+      padding: 1.5rem 2rem;
+      display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+    }
+    .per-asset-note .label { font-size: .8rem; font-weight: 700; color: var(--blue); text-transform: uppercase; letter-spacing: .07em; }
+    .per-asset-note p { font-size: .9rem; color: var(--gray-700); }
+
+    /* ── Roadmap ── */
+    .roadmap { background: var(--white); }
+    .roadmap-list {
+      margin-top: 3rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1.25rem;
+    }
+    .roadmap-item {
+      display: flex; gap: 1rem;
+      background: var(--gray-50);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+    }
+    .roadmap-phase {
+      font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+      color: var(--blue);
+      white-space: nowrap;
+      padding-top: .15rem;
+    }
+    .roadmap-item h4 { font-size: .95rem; font-weight: 700; margin-bottom: .25rem; }
+    .roadmap-item p { font-size: .83rem; color: var(--gray-500); }
+
+    /* ── CTA ── */
+    .cta {
+      background: linear-gradient(135deg, var(--blue) 0%, #1d4ed8 100%);
+      text-align: center;
+      color: var(--white);
+    }
+    .cta h2 { font-size: clamp(1.75rem, 4vw, 2.5rem); font-weight: 800; margin-bottom: 1rem; letter-spacing: -.025em; }
+    .cta p { font-size: 1.05rem; color: rgba(255,255,255,.75); margin-bottom: 2.25rem; }
+    .cta .email-form input[type="email"] {
+      background: rgba(255,255,255,.15);
+      border-color: rgba(255,255,255,.3);
+    }
+    .cta .email-form input:focus { background: rgba(255,255,255,.22); }
+    .btn-white {
+      padding: .85rem 1.75rem;
+      background: var(--white);
+      color: var(--blue);
+      font-size: .95rem; font-weight: 700; font-family: inherit;
+      border: none; border-radius: var(--radius);
+      cursor: pointer; white-space: nowrap;
+      transition: opacity .2s, transform .15s;
+    }
+    .btn-white:hover { opacity: .9; transform: translateY(-1px); }
+
+    /* ── Footer ── */
+    footer {
+      background: var(--navy);
+      color: rgba(255,255,255,.45);
+      padding: 2.5rem 1.5rem;
+      text-align: center;
+      font-size: .85rem;
+    }
+    footer strong { color: rgba(255,255,255,.8); }
+    footer .footer-links { display: flex; justify-content: center; gap: 1.5rem; margin-top: .75rem; }
+    footer .footer-links a { color: rgba(255,255,255,.4); transition: color .2s; }
+    footer .footer-links a:hover { color: var(--white); }
+
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      nav { padding: 1rem; }
+      .nav-links { display: none; }
+      .price-card.popular { transform: none; }
+      .countdown { gap: .75rem; }
+      .cd-block { min-width: 58px; padding: .7rem .9rem; }
+      .cd-num { font-size: 1.6rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Navbar ── -->
+<nav>
+  <div class="nav-logo">mtbf<span>.co.uk</span></div>
+  <ul class="nav-links">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+    <li><a href="#roadmap">Roadmap</a></li>
+  </ul>
+  <span class="nav-badge">Launching Soon</span>
+</nav>
+
+<!-- ── Hero ── -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-pill">
+      <span class="dot"></span>
+      Now in development &mdash; Be first in line
+    </div>
+
+    <h1>Reliability Engineering<br><em>Software for SMEs</em></h1>
+
+    <p class="hero-sub">
+      MTBF, MTTR, availability and downtime analytics built for
+      maintenance engineers — not enterprise consultants.
+      Simple. Affordable. Powerful.
+    </p>
+
+    <!-- Countdown -->
+    <div class="countdown" id="countdown">
+      <div class="cd-block"><span class="cd-num" id="cd-days">--</span><span class="cd-label">Days</span></div>
+      <div class="cd-block"><span class="cd-num" id="cd-hrs">--</span><span class="cd-label">Hours</span></div>
+      <div class="cd-block"><span class="cd-num" id="cd-min">--</span><span class="cd-label">Mins</span></div>
+      <div class="cd-block"><span class="cd-num" id="cd-sec">--</span><span class="cd-label">Secs</span></div>
+    </div>
+
+    <!-- Email signup -->
+    <!-- To activate: create a free form at formspree.io and replace YOUR_FORM_ID below -->
+    <form class="email-form" id="waitlist-form" action="https://formspree.io/f/YOUR_FORM_ID" method="POST">
+      <input type="email" name="email" placeholder="your@email.com" required autocomplete="email" />
+      <button type="submit" class="btn-primary">Join the Waitlist</button>
+    </form>
+    <p class="form-note">No spam. Unsubscribe at any time. We launch Q3 2026.</p>
+    <div id="success-msg">✓ You&rsquo;re on the list! We&rsquo;ll notify you at launch.</div>
+  </div>
+</section>
+
+<!-- ── Problem ── -->
+<section class="problem" id="problem">
+  <div class="container">
+    <span class="section-tag">The Problem</span>
+    <h2 class="section-title">Most SMEs are flying blind on reliability</h2>
+    <p class="section-sub">Enterprise CMMS tools are too expensive and too complex. Teams resort to spreadsheets — and miss the failures they could have prevented.</p>
+
+    <div class="problem-grid">
+      <div class="problem-card">
+        <div class="problem-icon">📋</div>
+        <h3>Manual spreadsheets</h3>
+        <p>Maintenance logs managed in Excel. No trends, no KPIs, no early warnings.</p>
+      </div>
+      <div class="problem-card">
+        <div class="problem-icon">💸</div>
+        <h3>Enterprise tools cost too much</h3>
+        <p>IBM Maximo and SAP EAM require six-figure budgets and dedicated IT teams.</p>
+      </div>
+      <div class="problem-card">
+        <div class="problem-icon">📉</div>
+        <h3>No reliability visibility</h3>
+        <p>Teams track work orders but can't answer: what is our MTBF? Which asset fails most?</p>
+      </div>
+      <div class="problem-card">
+        <div class="problem-icon">⏱️</div>
+        <h3>Reactive, not preventive</h3>
+        <p>Without analytics, every repair is a surprise. Planned maintenance requires data.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Features ── -->
+<section class="features" id="features">
+  <div class="container">
+    <div class="features-header">
+      <span class="section-tag">Features</span>
+      <h2 class="section-title">Everything a reliability engineer needs</h2>
+      <p class="section-sub">Built around the calculations you already use — not around sales workflows.</p>
+    </div>
+
+    <div class="features-grid">
+
+      <div class="feature-card">
+        <div class="feature-icon">📐</div>
+        <h3>Reliability Calculations</h3>
+        <p>Industry-standard metrics computed automatically from your maintenance history.</p>
+        <ul class="feature-list">
+          <li>MTBF — Mean Time Between Failures</li>
+          <li>MTTR — Mean Time To Repair</li>
+          <li>Availability percentage</li>
+          <li>Failure rate (λ)</li>
+          <li>Downtime cost estimation</li>
+        </ul>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">🏭</div>
+        <h3>Asset Management</h3>
+        <p>A single source of truth for every asset across your facility.</p>
+        <ul class="feature-list">
+          <li>Machine and equipment registry</li>
+          <li>Failure logs with root cause tagging</li>
+          <li>Planned and corrective maintenance records</li>
+          <li>Spare parts tracking</li>
+        </ul>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <h3>Dashboards &amp; KPIs</h3>
+        <p>Real-time visibility into the health of your assets and maintenance performance.</p>
+        <ul class="feature-list">
+          <li>Reliability KPI overview</li>
+          <li>Downtime trend charts</li>
+          <li>Critical asset ranking</li>
+          <li>Maintenance cost tracking</li>
+        </ul>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">📄</div>
+        <h3>Reports</h3>
+        <p>Generate professional reports for management and audits in seconds.</p>
+        <ul class="feature-list">
+          <li>PDF report export</li>
+          <li>Excel data export</li>
+          <li>Management summary view</li>
+          <li>Scheduled email reports</li>
+        </ul>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">🔌</div>
+        <h3>IoT Ready (Roadmap)</h3>
+        <p>Connect real sensors for automatic condition monitoring — no manual entry required.</p>
+        <ul class="feature-list">
+          <li>MQTT sensor ingestion</li>
+          <li>Temperature, vibration, pressure</li>
+          <li>Automatic failure event detection</li>
+          <li>Edge gateway compatible</li>
+        </ul>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">👥</div>
+        <h3>Multi-user &amp; Multi-site</h3>
+        <p>Role-based access for engineers, managers and executives — across all your sites.</p>
+        <ul class="feature-list">
+          <li>Role-based permissions</li>
+          <li>Multi-site asset views</li>
+          <li>Audit trail</li>
+          <li>SSO (Enterprise tier)</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ── KPI Formulas ── -->
+<section class="formulas" id="formulas">
+  <div class="container">
+    <span class="section-tag" style="color:var(--teal)">Core Reliability Metrics</span>
+    <h2 class="section-title">The calculations that drive decisions</h2>
+    <p class="section-sub">We compute these for every asset, automatically, from your maintenance logs.</p>
+
+    <div class="formula-grid">
+      <div class="formula-card">
+        <div class="formula-name">MTBF</div>
+        <div class="formula-full">Mean Time Between Failures</div>
+        <div class="formula-eq">Total Uptime ÷ No. of Failures</div>
+        <div class="formula-desc">How long your equipment runs before breaking down.</div>
+      </div>
+
+      <div class="formula-card">
+        <div class="formula-name">MTTR</div>
+        <div class="formula-full">Mean Time To Repair</div>
+        <div class="formula-eq">Total Repair Time ÷ No. of Repairs</div>
+        <div class="formula-desc">How fast your team restores failed equipment.</div>
+      </div>
+
+      <div class="formula-card">
+        <div class="formula-name">Availability</div>
+        <div class="formula-full">Asset Availability %</div>
+        <div class="formula-eq">MTBF ÷ (MTBF + MTTR) × 100</div>
+        <div class="formula-desc">Percentage of time your asset is operational and ready.</div>
+      </div>
+
+      <div class="formula-card">
+        <div class="formula-name">Failure Rate</div>
+        <div class="formula-full">Failure Rate (λ)</div>
+        <div class="formula-eq">λ = 1 ÷ MTBF</div>
+        <div class="formula-desc">Frequency of failures per unit of operating time.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Pricing ── -->
+<section class="pricing" id="pricing">
+  <div class="container">
+    <div class="pricing-header">
+      <span class="section-tag">Pricing</span>
+      <h2 class="section-title">Simple, transparent pricing</h2>
+      <p class="section-sub">No setup fees. No long-term contracts. Cancel any time. Prices in GBP.</p>
+    </div>
+
+    <div class="pricing-grid">
+
+      <!-- Starter -->
+      <div class="price-card">
+        <div class="price-tier">Starter</div>
+        <div class="price-amount">£29<span>/month</span></div>
+        <div class="price-desc">Perfect for small workshops and independent engineers.</div>
+        <ul class="price-features">
+          <li><span class="check">✓</span> Up to 25 assets</li>
+          <li><span class="check">✓</span> MTBF / MTTR / Availability</li>
+          <li><span class="check">✓</span> Failure log &amp; maintenance records</li>
+          <li><span class="check">✓</span> PDF &amp; Excel export</li>
+          <li><span class="check">✓</span> 1 user</li>
+          <li><span class="cross">✗</span> Multi-user access</li>
+          <li><span class="cross">✗</span> IoT integration</li>
+          <li><span class="cross">✗</span> API access</li>
+        </ul>
+        <button class="btn-plan outline" onclick="scrollToWaitlist()">Join Waitlist</button>
+      </div>
+
+      <!-- Professional (popular) -->
+      <div class="price-card popular">
+        <div class="popular-badge">Most Popular</div>
+        <div class="price-tier">Professional</div>
+        <div class="price-amount">£149<span>/month</span></div>
+        <div class="price-desc">For maintenance teams and engineering departments.</div>
+        <ul class="price-features">
+          <li><span class="check">✓</span> Unlimited assets</li>
+          <li><span class="check">✓</span> All reliability calculations</li>
+          <li><span class="check">✓</span> Advanced dashboards &amp; KPIs</li>
+          <li><span class="check">✓</span> Scheduled email reports</li>
+          <li><span class="check">✓</span> Up to 10 users</li>
+          <li><span class="check">✓</span> Excel import</li>
+          <li><span class="check">✓</span> REST API access</li>
+          <li><span class="cross">✗</span> IoT integration</li>
+        </ul>
+        <button class="btn-plan solid" onclick="scrollToWaitlist()">Join Waitlist</button>
+      </div>
+
+      <!-- Enterprise -->
+      <div class="price-card">
+        <div class="price-tier">Enterprise</div>
+        <div class="price-amount">£999<span>/month</span></div>
+        <div class="price-desc">For multi-site operations, custom integrations and compliance.</div>
+        <ul class="price-features">
+          <li><span class="check">✓</span> Everything in Professional</li>
+          <li><span class="check">✓</span> Multi-site management</li>
+          <li><span class="check">✓</span> IoT &amp; sensor integration</li>
+          <li><span class="check">✓</span> Weibull analysis</li>
+          <li><span class="check">✓</span> Unlimited users + SSO</li>
+          <li><span class="check">✓</span> Power BI / Grafana connector</li>
+          <li><span class="check">✓</span> Dedicated support</li>
+          <li><span class="check">✓</span> Custom SLA</li>
+        </ul>
+        <button class="btn-plan dark" onclick="scrollToWaitlist()">Contact Us</button>
+      </div>
+
+    </div>
+
+    <!-- Per-asset alternative -->
+    <div class="per-asset-note">
+      <span class="label">Alternative</span>
+      <p>
+        <strong>Per-asset pricing also available:</strong>
+        from £3 per asset/month — ideal for larger asset registers.
+        500 assets × £3/month = £1,500/month.
+        <a href="#" style="color:var(--blue); font-weight:600">Contact us for a quote →</a>
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ── Roadmap ── -->
+<section class="roadmap" id="roadmap">
+  <div class="container">
+    <span class="section-tag">Roadmap</span>
+    <h2 class="section-title">What we are building</h2>
+    <p class="section-sub">Practical first. We launch with what solves real problems, then expand.</p>
+
+    <div class="roadmap-list">
+      <div class="roadmap-item">
+        <div class="roadmap-phase">Q3 2026</div>
+        <div>
+          <h4>Launch — Core Reliability</h4>
+          <p>MTBF/MTTR/Availability, asset registry, failure logs, dashboards, PDF/Excel export.</p>
+        </div>
+      </div>
+      <div class="roadmap-item">
+        <div class="roadmap-phase">Q4 2026</div>
+        <div>
+          <h4>Teams &amp; Reports</h4>
+          <p>Multi-user, role-based access, scheduled management reports, Excel import.</p>
+        </div>
+      </div>
+      <div class="roadmap-item">
+        <div class="roadmap-phase">Q1 2027</div>
+        <div>
+          <h4>IoT Integration</h4>
+          <p>MQTT sensor ingestion, automatic failure detection from real sensor data.</p>
+        </div>
+      </div>
+      <div class="roadmap-item">
+        <div class="roadmap-phase">Q2 2027</div>
+        <div>
+          <h4>Advanced Analytics</h4>
+          <p>Weibull analysis, AI anomaly detection, predictive maintenance scoring.</p>
+        </div>
+      </div>
+      <div class="roadmap-item">
+        <div class="roadmap-phase">2027+</div>
+        <div>
+          <h4>Integrations</h4>
+          <p>Power BI, Grafana, SAP connector, ERP integration, digital twin visualisation.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── CTA ── -->
+<section class="cta" id="waitlist">
+  <div class="container">
+    <h2>Get early access to mtbf.co.uk</h2>
+    <p>Join engineers and maintenance managers already on the waitlist. Early members get 3 months free on Professional.</p>
+    <!-- Same form — replace YOUR_FORM_ID -->
+    <form class="email-form" id="cta-form" action="https://formspree.io/f/YOUR_FORM_ID" method="POST" style="margin:0 auto 1rem;">
+      <input type="email" name="email" placeholder="your@email.com" required autocomplete="email" />
+      <button type="submit" class="btn-white">Notify Me at Launch</button>
+    </form>
+    <p class="form-note" style="color:rgba(255,255,255,.4)">No spam. Unsubscribe at any time.</p>
+    <div id="cta-success-msg" style="display:none; color:#a7f3d0; margin-top:1rem; font-weight:500;">✓ You&rsquo;re on the list! We&rsquo;ll be in touch soon.</div>
+  </div>
+</section>
+
+<!-- ── Footer ── -->
+<footer>
+  <p><strong>mtbf.co.uk</strong> &mdash; Reliability Engineering Software for SMEs</p>
+  <div class="footer-links">
+    <a href="#features">Features</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#roadmap">Roadmap</a>
+    <a href="mailto:hello@mtbf.co.uk">hello@mtbf.co.uk</a>
+  </div>
+  <p style="margin-top:1.25rem; font-size:.75rem;">
+    &copy; 2026 mtbf.co.uk. All rights reserved.
+  </p>
+</footer>
+
+<!-- ── Scripts ── -->
+<script>
+  /* ── Countdown to 1 September 2026 ── */
+  function updateCountdown() {
+    const launch = new Date('2026-09-01T00:00:00');
+    const now = new Date();
+    const diff = launch - now;
+    if (diff <= 0) {
+      document.getElementById('countdown').style.display = 'none';
+      return;
+    }
+    const days = Math.floor(diff / 864e5);
+    const hrs  = Math.floor((diff % 864e5) / 36e5);
+    const min  = Math.floor((diff % 36e5)  / 6e4);
+    const sec  = Math.floor((diff % 6e4)   / 1e3);
+    document.getElementById('cd-days').textContent = String(days).padStart(2,'0');
+    document.getElementById('cd-hrs').textContent  = String(hrs).padStart(2,'0');
+    document.getElementById('cd-min').textContent  = String(min).padStart(2,'0');
+    document.getElementById('cd-sec').textContent  = String(sec).padStart(2,'0');
+  }
+  updateCountdown();
+  setInterval(updateCountdown, 1000);
+
+  /* ── Form AJAX submission ── */
+  function handleForm(formId, successId) {
+    const form = document.getElementById(formId);
+    if (!form) return;
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const action = form.getAttribute('action');
+      /* If still placeholder, just show success locally */
+      if (action.includes('YOUR_FORM_ID')) {
+        document.getElementById(successId).style.display = 'block';
+        form.reset();
+        return;
+      }
+      try {
+        const data = new FormData(form);
+        const res = await fetch(action, { method: 'POST', body: data, headers: { 'Accept': 'application/json' } });
+        if (res.ok) {
+          document.getElementById(successId).style.display = 'block';
+          form.reset();
+        }
+      } catch (_) {
+        document.getElementById(successId).style.display = 'block';
+        form.reset();
+      }
+    });
+  }
+  handleForm('waitlist-form', 'success-msg');
+  handleForm('cta-form',      'cta-success-msg');
+
+  /* ── Scroll to waitlist ── */
+  function scrollToWaitlist() {
+    document.getElementById('waitlist').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  /* ── Smooth scroll for nav links ── */
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      const target = document.querySelector(a.getAttribute('href'));
+      if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth' }); }
+    });
+  });
+</script>
+
+</body>
+</html>
