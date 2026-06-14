@@ -28,6 +28,20 @@ Sensors -> Simulator -> MQTT Broker -> Local Dashboard / Edge Forwarders -> Clou
 - `aws_iot/`: AWS IoT bridge and offline queue components
 - `docs/`: phase-by-phase implementation and architecture notes
 
+## Tools Used
+
+- Docker Desktop: runs containers locally.
+- Docker Compose: orchestrates the multi-service local stack.
+- Git: source control and repository management.
+- Python + pip: runs the simulator and installs dependencies.
+- Mosquitto: local MQTT broker for telemetry messages.
+- Telegraf: collects MQTT telemetry and forwards metrics.
+- InfluxDB: time-series storage for telemetry data.
+- Grafana: dashboards for local/offline observability.
+- Kubernetes: deployment manifests for edge/cloud environments.
+- AWS IoT components: optional edge-to-cloud MQTT bridge path.
+- FastAPI + JWT + PostgreSQL: cloud ingestion, auth, and persistence path.
+
 ## Quick Start (Local Docker Stack)
 
 Prerequisites:
